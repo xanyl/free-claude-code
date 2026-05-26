@@ -7,6 +7,7 @@ import pytest
 
 from providers.base import ProviderConfig
 from providers.gemini import GEMINI_DEFAULT_BASE, GeminiProvider
+from providers.gemini.request import clone_body_without_thinking
 
 
 class MockMessage:
@@ -189,6 +190,41 @@ def test_build_request_body_merges_caller_nested_google(gemini_provider):
     assert isinstance(thinking_config, dict)
     assert thinking_config.get("budget_tokens") == 128
     assert thinking_config.get("include_thoughts") is True
+
+
+def test_clone_body_without_thinking_strips_fields(gemini_provider):
+    req = MockRequest(
+        extra_body={
+            "metadata": {"user": "u1"},
+            "extra_body": {
+                "google": {
+                    "thinking_config": {"budget_tokens": 128},
+                    "cached_content": "cachedContents/example",
+                }
+            },
+        }
+    )
+
+    body = gemini_provider._build_request_body(req)
+    stripped = clone_body_without_thinking(body)
+
+    assert stripped is not None
+    assert "reasoning_effort" not in stripped
+    extra_body = stripped.get("extra_body")
+    assert isinstance(extra_body, dict)
+    assert extra_body.get("metadata") == {"user": "u1"}
+    literal_extra_body = extra_body.get("extra_body")
+    assert isinstance(literal_extra_body, dict)
+    google = literal_extra_body.get("google")
+    assert isinstance(google, dict)
+    assert google.get("cached_content") == "cachedContents/example"
+    assert "thinking_config" not in google
+
+
+def test_clone_body_without_thinking_noop() -> None:
+    body = {"model": "m", "messages": []}
+
+    assert clone_body_without_thinking(body) is None
 
 
 @pytest.mark.asyncio
