@@ -71,6 +71,7 @@ def build_request_body(request_data: Any, *, thinking_enabled: bool) -> dict:
 
 
 def _strip_thinking_from_extra_body(extra_body: dict[str, Any]) -> bool:
+    """Remove Gemini thinking config from ``extra_body``; returns True if removed."""
     removed = False
     literal_extra_body = extra_body.get("extra_body")
     if isinstance(literal_extra_body, dict):
@@ -86,7 +87,7 @@ def _strip_thinking_from_extra_body(extra_body: dict[str, Any]) -> bool:
 
 
 def clone_body_without_thinking(body: dict[str, Any]) -> dict[str, Any] | None:
-    """Return a clone with Gemini thinking fields stripped, or None if unchanged."""
+    """Return a clone with Gemini thinking fields stripped, or None if none found."""
     cloned_body = deepcopy(body)
     removed = cloned_body.pop("reasoning_effort", None) is not None
     extra_body = cloned_body.get("extra_body")
