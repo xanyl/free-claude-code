@@ -80,14 +80,13 @@ def _strip_thinking_from_extra_body(extra_body: dict[str, Any]) -> bool:
             removed = True
             if not google_section:
                 literal_extra_body.pop("google", None)
-        if not literal_extra_body:
+        if removed and not literal_extra_body:
             extra_body.pop("extra_body", None)
-            removed = True
     return removed
 
 
 def clone_body_without_thinking(body: dict[str, Any]) -> dict[str, Any] | None:
-    """Return a clone with Gemini thinking fields stripped, if present."""
+    """Return a clone with Gemini thinking fields stripped, or None if unchanged."""
     cloned_body = deepcopy(body)
     removed = cloned_body.pop("reasoning_effort", None) is not None
     extra_body = cloned_body.get("extra_body")

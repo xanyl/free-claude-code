@@ -36,7 +36,7 @@ class GeminiProvider(OpenAIChatTransport):
 
     def _get_retry_request_body(self, error: Exception, body: dict) -> dict | None:
         status_code = getattr(error, "status_code", None)
-        if not isinstance(error, openai.BadRequestError) and status_code != 400:
+        if not (isinstance(error, openai.BadRequestError) or status_code == 400):
             return None
         retry_body = clone_body_without_thinking(body)
         if retry_body is None:
