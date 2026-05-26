@@ -35,7 +35,7 @@ class GeminiProvider(OpenAIChatTransport):
         )
 
     def _get_retry_request_body(self, error: Exception, body: dict) -> dict | None:
-        """Retry once without thinking fields when Gemini rejects the request."""
+        """Return a retry body without thinking fields, or None to skip retry."""
         status_code = getattr(error, "status_code", None)
         # Handle explicit OpenAI BadRequestError or any 400 surfaced by the SDK.
         if not (isinstance(error, openai.BadRequestError) or status_code == 400):
@@ -45,7 +45,7 @@ class GeminiProvider(OpenAIChatTransport):
             return None
         error_body = getattr(error, "body", None)
         logger.warning(
-            "GEMINI_STREAM: retrying without thinking fields after 400 error: {} | body={}",
+            "GEMINI_RETRY: retrying without thinking fields after 400 error: {} | body={}",
             str(error),
             json.dumps(error_body, default=str) if error_body is not None else None,
         )
