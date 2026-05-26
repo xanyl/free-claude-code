@@ -68,3 +68,33 @@ def build_request_body(request_data: Any, *, thinking_enabled: bool) -> dict:
         len(body.get("tools", [])),
     )
     return body
+
+
+def _strip_thinking_from_extra_body(extra_body: dict[str, Any]) -> bool:
+    removed = False
+    literal_extra_body = extra_body.get("extra_body")
+    if isinstance(literal_extra_body, dict):
+        google_section = literal_extra_body.get("google")
+        if isinstance(google_section, dict) and "thinking_config" in google_section:
+            google_section.pop("thinking_config", None)
+            removed = True
+            if not google_section:
+                literal_extra_body.pop("google", None)
+        if not literal_extra_body:
+            extra_body.pop("extra_body", None)
+            removed = True
+    return removed
+
+
+def clone_body_without_thinking(body: dict[str, Any]) -> dict[str, Any] | None:
+    """Return a clone with Gemini thinking fields stripped, if present."""
+    cloned_body = deepcopy(body)
+    removed = cloned_body.pop("reasoning_effort", None) is not None
+    extra_body = cloned_body.get("extra_body")
+    if isinstance(extra_body, dict):
+        removed = _strip_thinking_from_extra_body(extra_body) or removed
+        if not extra_body:
+            cloned_body.pop("extra_body", None)
+    if not removed:
+        return None
+    return cloned_body
